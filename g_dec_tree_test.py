@@ -1,6 +1,7 @@
 from g_dec_tree import *
 
-training_data = pd.read_csv('./dataset/agaricus-lepiota - training.csv', sep=',')
+training_data = pd.read_csv(
+    './dataset/agaricus-lepiota - training.csv', sep=',')
 
 training_data = training_data.loc[:, training_data.columns != 'id']
 test = training_data.loc[:, training_data.columns != 'id']

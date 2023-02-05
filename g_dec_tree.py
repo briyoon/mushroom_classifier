@@ -41,7 +41,8 @@ def gini_attr_split_values(data_set, classifier, attributes):
     for col in attributes:
         if col == classifier:
             continue
-        gini_split_val[col] = gini_split(data_set=data_set, attr=col, classifier=classifier)
+        gini_split_val[col] = gini_split(
+            data_set=data_set, attr=col, classifier=classifier)
     return gini_split_val
 
 
@@ -76,23 +77,26 @@ def homogeneous(data_set, classifier):
 def g_ind_decision_tree(data_set, classifier, attributes, examples):
     if homogeneous(data_set, classifier) or len(attributes) == 1:
         cls = majority_classification(data_set, classifier)
-        return AttrNode(name=cls, gini=0, is_leaf=True)
+        return AttrNode(name=cls, info_gain=0, is_leaf=True)
 
-    attr_split_values = gini_attr_split_values(data_set, classifier, attributes)
+    attr_split_values = gini_attr_split_values(
+        data_set, classifier, attributes)
     best_classifier = best_attr(attr_split_values)
     values = {val for val in examples.loc[:, best_classifier]}
-    root = AttrNode(name=best_classifier, gini=attr_split_values[best_classifier])
+    root = AttrNode(name=best_classifier,
+                    info_gain=attr_split_values[best_classifier])
 
     for value in values:
         value_subset = data_set.loc[data_set[best_classifier] == value]
         if len(value_subset.index) == 0:
             maj_class = majority_classification(data_set, classifier)
-            child = AttrNode(name=maj_class, gini=0, is_leaf=True)
+            child = AttrNode(name=maj_class, info_gain=0, is_leaf=True)
             root.children[value] = child
         else:
             root.children[value] = g_ind_decision_tree(value_subset,
                                                        classifier,
-                                                       [atr for atr in attributes if atr != best_classifier],
+                                                       [atr for atr in attributes if atr !=
+                                                           best_classifier],
                                                        examples)
     return root
 
