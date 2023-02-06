@@ -130,3 +130,7 @@ dmypy.json
 
 # for PyCharm
 .idea
+.DS_Store
+
+# big test file
+/dataset/large_test.csv

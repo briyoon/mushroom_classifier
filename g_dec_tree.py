@@ -1,6 +1,8 @@
 from AttrNode import AttrNode
 import pandas as pd
 
+from chi_square import chi_square_attr_val, chi_valid_attr
+
 
 def gini_split(data_set, attr, classifier):
     n = len(data_set.index)
@@ -75,6 +77,43 @@ def homogeneous(data_set, classifier):
 
 
 def g_ind_decision_tree(data_set, classifier, attributes, examples):
+    if homogeneous(data_set, classifier) or len(attributes) == 1:
+        cls = majority_classification(data_set, classifier)
+        return AttrNode(name=cls, info_gain=0, is_leaf=True)
+
+    attr_split_values = gini_attr_split_values(
+        data_set, classifier, attributes)
+    best_classifier = best_attr(attr_split_values)
+    values = {val for val in examples.loc[:, best_classifier]}
+    root = AttrNode(name=best_classifier,
+                    info_gain=attr_split_values[best_classifier])
+
+    for value in values:
+        value_subset = data_set.loc[data_set[best_classifier] == value]
+        if len(value_subset.index) == 0:
+            maj_class = majority_classification(data_set, classifier)
+            child = AttrNode(name=maj_class, info_gain=0, is_leaf=True)
+            root.children[value] = child
+        else:
+            root.children[value] = g_ind_decision_tree(value_subset,
+                                                       classifier,
+                                                       [atr for atr in attributes if atr !=
+                                                           best_classifier],
+                                                       examples)
+    return root
+
+
+def g_dec_tree_chi(data_set, classifier, attributes, examples, alpha):
+
+    for attr in data_set.columns:
+        if attr == classifier:
+            continue
+        chi_stat = chi_square_attr_val(data_set[attr], classification=data_set[classifier])
+        deg = len(examples[attr].unique()) - 1
+        if not chi_valid_attr(chi_score=chi_stat, alpha=alpha, deg_freedom=deg):
+            data_set = data_set.loc[:, data_set.columns != attr]
+            attributes = [a for a in attributes if a != attr]
+
     if homogeneous(data_set, classifier) or len(attributes) == 1:
         cls = majority_classification(data_set, classifier)
         return AttrNode(name=cls, info_gain=0, is_leaf=True)

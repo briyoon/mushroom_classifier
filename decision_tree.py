@@ -50,7 +50,18 @@ def information_gain(attributes, classification, param: iGainType = iGainType.en
                 (sum(child_entropy.values()) / len(child_entropy))
 
     elif param == iGainType.gini:
-        pass
+        # sum (|S_v|/|S| * gini(S_v))
+        for attr in freq_map:
+            split_val = 0
+            for val in freq_map[attr]:
+                total_v = freq_map[attr][val]['e'] + freq_map[attr][val]['p']
+                weight = total_v / len(classification)
+                g_index = 1 - (((freq_map[attr][val]['e'] / total_v) ** 2)
+                               + ((freq_map[attr][val]['p'] / total_v) ** 2))
+                split_val += (weight * g_index)
+            # gini gain is best for low split value
+            retval[attr] = 1 - split_val
+
     elif param == iGainType.missclass:
         for attr in freq_map:
             attr_imp = []
