@@ -1,7 +1,6 @@
 from collections import defaultdict
 import scipy
 
-
 def chi_square_attr_val(attribute, classification):
     attr_map = defaultdict(lambda: defaultdict(int))
     class_map = defaultdict(int)
