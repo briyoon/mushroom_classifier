@@ -1,4 +1,5 @@
 from collections import defaultdict
+
 import scipy
 
 def chi_square_attr_val(attribute, classification):
