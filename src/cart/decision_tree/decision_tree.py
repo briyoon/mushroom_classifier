@@ -1,9 +1,12 @@
 from math import log2, sqrt
 from random import sample
+from random import randrange
 
 import numpy as np
+import pandas
 
 import src.cart as cart
+
 
 def get_feature_set_size(total_attrs, subset=False):
     if not subset:
@@ -11,12 +14,12 @@ def get_feature_set_size(total_attrs, subset=False):
     return int(sqrt(len(total_attrs)))
 
 
-def split(data_set, attr, classifier, criteria: cart.iGainType = cart.iGainType.entropy):
-    n = len(data_set.index)
+def split(dataset, attr, classifier, criteria: cart.iGainType = cart.iGainType.entropy):
+    n = len(dataset.index)
     attr_dict = {}
     split_value = 0
 
-    for datum in data_set.loc[:, attr]:
+    for datum in dataset.loc[:, attr]:
         if datum not in attr_dict:
             attr_dict[datum] = 1
         else:
@@ -25,7 +28,7 @@ def split(data_set, attr, classifier, criteria: cart.iGainType = cart.iGainType.
         # proportion
         weight = attr_dict[attr_value] / n
         # choose all examples with this attr value
-        subset = data_set.loc[data_set[attr] == attr_value]
+        subset = dataset.loc[dataset[attr] == attr_value]
 
         # impurity
         attr_v = cart.info_gain(subset, classifier, criteria)
@@ -36,11 +39,11 @@ def split(data_set, attr, classifier, criteria: cart.iGainType = cart.iGainType.
     return split_value
 
 
-def split_values(data_set, classifier, attributes, subsetFeatures, criteria: cart.iGainType = cart.iGainType.entropy):
+def split_values(dataset, classifier, attributes, subset_features, criteria: cart.iGainType = cart.iGainType.entropy):
     split_vals = {}
 
     # handling feature subsets for random forests
-    if subsetFeatures:
+    if subset_features:
         attr_list = list(attributes)
         attr_list = [attr for attr in attr_list if attr != 'class']
         attributes = sample(attr_list, get_feature_set_size(attr_list))
@@ -50,14 +53,14 @@ def split_values(data_set, classifier, attributes, subsetFeatures, criteria: car
             continue
 
         split_vals[col] = split(
-            data_set, col, classifier, criteria)
+            dataset, col, classifier, criteria)
 
     return split_vals
 
 
-def majority_classification(data_set, classifier):
+def majority_classification(dataset, classifier):
     classification_count = {}
-    for datum in data_set.loc[:, classifier]:
+    for datum in dataset.loc[:, classifier]:
         if datum not in classification_count:
             classification_count[datum] = 1
         else:
@@ -78,8 +81,8 @@ def best_attr(attr_split_values):
     return ''
 
 
-def homogeneous(data_set, classifier):
-    class_set = {val for val in data_set.loc[:, classifier]}
+def homogeneous(dataset, classifier):
+    class_set = {val for val in dataset.loc[:, classifier]}
     return len(class_set) == 1
 
 
@@ -104,65 +107,68 @@ def most_freq_pred(pred_list):
     return max(pred_count, key=pred_count.get)
 
 
-def create_decision_tree(data_set, classifier, attributes, examples, criteria: cart.iGainType = cart.iGainType.entropy, subsetFeatures=False):
-    if homogeneous(data_set, classifier) or len(attributes) == 1:
-        cls = majority_classification(data_set, classifier)
-        return cart.AttrNode(cls, 0, True)
+def process_missing(data, column, missing_indicator='?'):
+    present_values = data.loc[data[column] != missing_indicator]
+    missing_values = data.loc[data[column] == missing_indicator]
 
-    attr_split_values = split_values(
-        data_set, classifier, attributes, subsetFeatures, criteria)
-    best_classifier = best_attr(attr_split_values)
-    values = {val for val in examples.loc[:, best_classifier]}
-    root = cart.AttrNode(best_classifier, attr_split_values[best_classifier])
+    if len(present_values.index) == 0:
+        print('Unable to replace missing values, no other values available')
+        return
 
-    for value in values:
-        value_subset = data_set.loc[data_set[best_classifier] == value]
-        if len(value_subset.index) == 0:
-            # no data records in subset, classification node
-            # w/ value set to most common class at root node
-            maj_class = majority_classification(data_set, classifier)
-            child = cart.AttrNode(maj_class, 0, True)
-            root.children[value] = child
-        else:
-            # sub trees for remaining attributes
-            root.children[value] = create_decision_tree(value_subset,
-                                                        classifier,
-                                                        [atr for atr in attributes if atr !=
-                                                         best_classifier],
-                                                        examples,
-                                                        subsetFeatures,
-                                                        criteria)
-    return root
+    for index in missing_values.index:
+        present_index = randrange(len(present_values.index))
+        replacement = present_values[column].values[present_index]
+        data.at[index, column] = replacement
 
 
-def create_decision_tree_chi(data_set, classifier, attributes, examples, alpha,
-                             criteria: cart.iGainType = cart.iGainType.entropy, subsetFeatures=False):
-    for attr in data_set.columns:
+def attr_value_missing(dataset, column, missing_indicator='?'):
+    missing_values = dataset.loc[dataset[column] == missing_indicator]
+    return len(missing_values.index) > 0
+
+
+def chi_pruned_attr(dataset, attributes, classifier, examples, alpha):
+    pruned_attr = attributes
+
+    for attr in dataset.columns:
         if attr == classifier:
             continue
         chi_stat = cart.chi_square_attr_val(
-            data_set[attr], classification=data_set[classifier])
+            dataset[attr], classification=dataset[classifier])
         deg = len(examples[attr].unique()) - 1
         if not cart.chi_valid_attr(chi_score=chi_stat, alpha=alpha, deg_freedom=deg):
-            data_set = data_set.loc[:, data_set.columns != attr]
-            attributes = [a for a in attributes if a != attr]
+            dataset = dataset.loc[:, dataset.columns != attr]
+            pruned_attr = [a for a in attributes if a != attr]
 
-    if homogeneous(data_set, classifier) or len(attributes) == 1:
-        cls = majority_classification(data_set, classifier)
-        return cart.AttrNode(name=cls, info_gain=0, is_leaf=True)
+    return pruned_attr
+
+
+def create_decision_tree(dataset, classifier, attributes, examples,
+                         criteria: cart.iGainType = cart.iGainType.entropy,
+                         subset_features=False, chi_pruning=False, alpha=0):
+    if chi_pruning:
+        attributes = chi_pruned_attr(dataset, attributes, classifier, examples, alpha)
+
+    if homogeneous(dataset, classifier) or len(attributes) == 1:
+        cls = majority_classification(dataset, classifier)
+        return cart.AttrNode(cls, 0, True)
 
     attr_split_values = split_values(
-        data_set, classifier, attributes, subsetFeatures, criteria)
+        dataset, classifier, attributes, subset_features, criteria)
     best_classifier = best_attr(attr_split_values)
+
+    # replace missing attribute values
+    if attr_value_missing(dataset, best_classifier):
+        process_missing(dataset, best_classifier)
+
     values = {val for val in examples.loc[:, best_classifier]}
     root = cart.AttrNode(best_classifier, attr_split_values[best_classifier])
 
     for value in values:
-        value_subset = data_set.loc[data_set[best_classifier] == value]
+        value_subset = dataset.loc[dataset[best_classifier] == value]
         if len(value_subset.index) == 0:
             # no data records in subset, classification node
             # w/ value set to most common class at root node
-            maj_class = majority_classification(data_set, classifier)
+            maj_class = majority_classification(dataset, classifier)
             child = cart.AttrNode(maj_class, 0, True)
             root.children[value] = child
         else:
@@ -173,13 +179,21 @@ def create_decision_tree_chi(data_set, classifier, attributes, examples, alpha,
                                                          best_classifier],
                                                         examples,
                                                         criteria,
-                                                        subsetFeatures)
-
+                                                        subset_features=subset_features,
+                                                        chi_pruning=chi_pruning,
+                                                        alpha=alpha)
     return root
 
 
-def classify(root: cart.AttrNode, example: dict):
+def get_replacement_attr_val(dataset: pandas.DataFrame, attr_name, missing_indicator='?'):
+    present = dataset.loc[dataset[attr_name] != missing_indicator]
+    return present[attr_name].values[randrange(len(present.index))]
+
+
+def classify(root: cart.AttrNode, example: dict, dataset: pandas.DataFrame, missing_indicator='?'):
     while not root.is_leaf:
         ex_value = example[root.name]
+        if ex_value == missing_indicator:
+            ex_value = get_replacement_attr_val(dataset, root.name, missing_indicator)
         root = root.children[ex_value]
     return root.name

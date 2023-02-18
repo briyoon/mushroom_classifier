@@ -5,11 +5,11 @@ import pandas as pd
 import cart
 
 attribute_value_data = pd.read_csv(
-    './dataset/all-attr-values.csv', sep=',')
+    '../dataset/all-attr-values.csv', sep=',')
 training_data = pd.read_csv(
-    './dataset/agaricus-lepiota - training.csv', sep=',')
+    '../dataset/agaricus-lepiota - training.csv', sep=',')
 test_data = pd.read_csv(
-    'dataset/large_test.csv', sep=',')
+    '../dataset/large_test.csv', sep=',')
 training_data, validation_df = train_test_split(training_data, test_size=0.2)
 
 training_data_ids = training_data['id'].values
@@ -44,9 +44,9 @@ id = 0
 for ex in test_dict:
     ex_id = id
     id += 1
-    gini_pred = cart.classify(gini_root, ex)
-    entropy_pred = cart.classify(entropy_root, ex)
-    misclass_pred = cart.classify(misclass_root, ex)
+    gini_pred = cart.classify(gini_root, ex, training_data)
+    entropy_pred = cart.classify(entropy_root, ex, training_data)
+    misclass_pred = cart.classify(misclass_root, ex, training_data)
 
     if ex_id not in test_predictions:
         test_predictions[ex_id] = []
@@ -55,9 +55,8 @@ for ex in test_dict:
     test_predictions[ex_id].append(entropy_pred)
     test_predictions[ex_id].append(misclass_pred)
 
-
 for prediction in validation_dict:
-    actual_class = cart.classify(misclass_root, prediction)
+    actual_class = cart.classify(misclass_root, prediction, training_data)
     expected_class = prediction['class']
     if actual_class == expected_class:
         total_correct += 1
@@ -66,17 +65,22 @@ accuracy = total_correct / total
 print(f'\ncorrect={total_correct}, total={total}, accuracy={accuracy}')
 
 for alpha in alpha_values:
-    chi_root = cart.create_decision_tree_chi(training_data, 'class', training_data.columns,
-                                        examples=attribute_value_data, alpha=alpha, criteria=cart.iGainType.gini)
+    chi_root = cart.create_decision_tree(dataset=training_data,
+                                         classifier='class',
+                                         attributes=training_data.columns,
+                                         examples=attribute_value_data,
+                                         criteria=cart.iGainType.gini,
+                                         chi_pruning=True,
+                                         alpha=alpha)
     g_root = cart.create_decision_tree(training_data, 'class', training_data.columns,
-                                  examples=attribute_value_data, criteria=cart.iGainType.gini)
+                                       examples=attribute_value_data, criteria=cart.iGainType.gini)
     chi_total = 0
     g_total = 0
     total = len(validation_dict)
 
     for ex in validation_dict:
-        chi_classification = cart.classify(chi_root, ex)
-        g_classification = cart.classify(g_root, ex)
+        chi_classification = cart.classify(chi_root, ex, training_data)
+        g_classification = cart.classify(g_root, ex, training_data)
         expected_class = ex['class']
         if chi_classification == expected_class:
             chi_total += 1
@@ -86,7 +90,6 @@ for alpha in alpha_values:
     chi_acc = chi_total / total
     g_acc = g_total / total
     print(f'chi tree: alpha={alpha}, chi_acc={chi_acc}, g_acc={g_acc}')
-
 
 test_pred_mean = {}
 

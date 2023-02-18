@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import scipy
 
+
 def chi_square_attr_val(attribute, classification):
     attr_map = defaultdict(lambda: defaultdict(int))
     class_map = defaultdict(int)
@@ -15,6 +16,8 @@ def chi_square_attr_val(attribute, classification):
         total = attr_map[v]['e'] + attr_map[v]['p']
         expected_e = total * prob_e
         expected_p = total * prob_p
+        if expected_e == 0 or expected_p == 0:
+            continue
         var_e = (attr_map[v]['e'] - expected_e) ** 2
         var_p = (attr_map[v]['p'] - expected_p) ** 2
         chi_e = (var_e / expected_e)
