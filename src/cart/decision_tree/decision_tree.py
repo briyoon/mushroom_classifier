@@ -7,11 +7,10 @@ import pandas
 
 import src.cart as cart
 
-
-def get_feature_set_size(total_attrs, subset=False):
-    if not subset:
-        return len(total_attrs)
-    return int(sqrt(len(total_attrs)))
+def get_feature_subset(total_attrs):
+    attr_list = list(total_attrs)
+    attr_list = [attr for attr in attr_list if attr != 'class']
+    return sample(attr_list,  int(sqrt(len(total_attrs))))
 
 
 def split(dataset, attr, classifier, criteria: cart.iGainType = cart.iGainType.entropy):
@@ -24,6 +23,7 @@ def split(dataset, attr, classifier, criteria: cart.iGainType = cart.iGainType.e
             attr_dict[datum] = 1
         else:
             attr_dict[datum] += 1
+
     for attr_value in attr_dict:
         # proportion
         weight = attr_dict[attr_value] / n
@@ -41,13 +41,7 @@ def split(dataset, attr, classifier, criteria: cart.iGainType = cart.iGainType.e
 
 def split_values(dataset, classifier, attributes, subset_features, criteria: cart.iGainType = cart.iGainType.entropy):
     split_vals = {}
-
-    # handling feature subsets for random forests
-    if subset_features:
-        attr_list = list(attributes)
-        attr_list = [attr for attr in attr_list if attr != 'class']
-        attributes = sample(attr_list, get_feature_set_size(attr_list))
-
+    
     for col in attributes:
         if col == classifier:
             continue
@@ -146,7 +140,8 @@ def create_decision_tree(dataset, classifier, attributes, examples,
                          criteria: cart.iGainType = cart.iGainType.entropy,
                          subset_features=False, chi_pruning=False, alpha=0):
     if chi_pruning:
-        attributes = chi_pruned_attr(dataset, attributes, classifier, examples, alpha)
+        attributes = chi_pruned_attr(
+            dataset, attributes, classifier, examples, alpha)
 
     if homogeneous(dataset, classifier) or len(attributes) == 1:
         cls = majority_classification(dataset, classifier)
@@ -194,6 +189,7 @@ def classify(root: cart.AttrNode, example: dict, dataset: pandas.DataFrame, miss
     while not root.is_leaf:
         ex_value = example[root.name]
         if ex_value == missing_indicator:
-            ex_value = get_replacement_attr_val(dataset, root.name, missing_indicator)
+            ex_value = get_replacement_attr_val(
+                dataset, root.name, missing_indicator)
         root = root.children[ex_value]
     return root.name
