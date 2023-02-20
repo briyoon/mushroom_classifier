@@ -15,10 +15,7 @@ training_data = training_data.drop(columns=['id'])
 
 # save unique values
 unique_values = {}
-for attr in training_data:
-    if attr == "class":
-        continue
-    unique_values[attr] = training_data[attr].unique()
+
 
 g_root = cart.create_decision_tree(
     dataset=training_data,

@@ -4,12 +4,17 @@ import pandas as pd
 
 import cart
 
-attribute_value_data = pd.read_csv(
-    'dataset/all-attr-values.csv', sep=',')
 training_data = pd.read_csv(
     'dataset/agaricus-lepiota - training.csv', sep=',')
 test_data = pd.read_csv(
     'dataset/large_test.csv', sep=',')
+
+attribute_value_data = {}
+for attr in training_data:
+    if attr == "class":
+        continue
+    attribute_value_data[attr] = training_data[attr].unique()
+
 training_data, validation_df = train_test_split(training_data, test_size=0.2)
 
 training_data_ids = training_data['id'].values
