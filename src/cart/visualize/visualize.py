@@ -1,6 +1,6 @@
 from igraph import Graph, plot
 
-def create_visualization(root, save_path):
+def create_visualization(root, scale, save_path):
     level = dict()
     level[root] = 0
     q = [root]
@@ -42,8 +42,6 @@ def create_visualization(root, save_path):
             return "green"
         return "blue"
 
-    scale = 5
-
     style = {}
     style["vertex_size"] = [25 * scale for _ in nodes]
     style["vertex_label"] = [str(node) for node in nodes]
@@ -55,4 +53,4 @@ def create_visualization(root, save_path):
     style["edge_label_size"] = 15 * scale
 
     layout = G.layout(layout='tree', root=[0])
-    plot(G, layout=layout, bbox=[6000, 6000], margin=20 * scale, **style, target=save_path)
+    plot(G, layout=layout, bbox=[600 * scale * 2, 600 * scale * 2], margin=20 * scale, **style, target=save_path)
