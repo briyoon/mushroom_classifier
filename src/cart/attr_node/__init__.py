@@ -1,1 +1,1 @@
-from src.cart.attr_node.attr_node import AttrNode
+from cart.attr_node.attr_node import AttrNode

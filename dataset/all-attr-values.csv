@@ -1,13 +1,13 @@
 cap-shape,cap-surface,cap-color,bruises,odor,gill-attachment,gill-spacing,gill-size,gill-color,stalk-shape,stalk-root,stalk-surface-ar,stalk-surface-br,stalk-color-ar,stalk-color-br,veil-type,veil-color,ring-number,ring-type,spore-print-color,population,habitat
 b,s,w,t,p,f,c,n,n,e,e,s,s,w,w,p,w,o,p,n,v,u
 c,y,n,f,s,a,w,b,b,t,?,k,k,p,p,u,o,t,e,w,y,p
-f,f,g,,n,d,d,,w,,b,f,y,g,b,,n,n,l,h,s,d
-k,g,y,,f,n,,,p,,r,y,f,b,c,,y,,n,k,c,g
-s,,e,,l,,,,h,,c,,,c,n,,,,f,b,a,w
-x,,p,,c,,,,g,,z,,,n,g,,,,c,u,n,l
-,,b,,m,,,,k,,u,,,o,y,,,,s,r,,m
-,,c,,y,,,,u,,,,,e,o,,,,z,y,,
-,,r,,a,,,,y,,,,,y,e,,,,,o,,
-,,u,,,,,,e,,,,,,,,,,,,,
-,,,,,,,,r,,,,,,,,,,,,,
-,,,,,,,,o,,,,,,,,,,,,,
+f,f,g, ,n,d,d, ,w, ,b,f,y,g,b, ,n,n,l,h,s,d
+k,g,y, ,f,n, , ,p, ,r,y,f,b,c, ,y, ,n,k,c,g
+s, ,e, ,l, , , ,h, ,c, , ,c,n, , , ,f,b,a,w
+x, ,p, ,c, , , ,g, ,z, , ,n,g, , , ,c,u,n,l
+ , ,b, ,m, , , ,k, ,u, , ,o,y, , , ,s,r, ,m
+ , ,c, ,y, , , ,u, , , , ,e,o, , , ,z,y, ,
+ , ,r, ,a, , , ,y, , , , ,y,e, , , , ,o, ,
+ , ,u, , , , , ,e, , , , , , , , , , , , ,
+ , , , , , , , ,r, , , , , , , , , , , , ,
+ , , , , , , , ,o, , , , , , , , , , , , ,

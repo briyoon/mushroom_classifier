@@ -68,12 +68,12 @@ for alpha in alpha_values:
     chi_root = cart.create_decision_tree(dataset=training_data,
                                          classifier='class',
                                          attributes=training_data.columns,
-                                         examples=attribute_value_data,
+                                         unique_values=attribute_value_data,
                                          criteria=cart.iGainType.gini,
                                          chi_pruning=True,
                                          alpha=alpha)
     g_root = cart.create_decision_tree(training_data, 'class', training_data.columns,
-                                       examples=attribute_value_data, criteria=cart.iGainType.gini)
+                                       unique_values=attribute_value_data, criteria=cart.iGainType.gini)
     chi_total = 0
     g_total = 0
     total = len(validation_dict)

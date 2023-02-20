@@ -1,1 +1,1 @@
-from src.cart.chi_square.chi_square import *
+from cart.chi_square.chi_square import *
