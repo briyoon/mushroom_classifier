@@ -7,11 +7,10 @@ import pandas as pd
 
 import cart
 
-
-def get_feature_set_size(total_attrs, subset=False):
-    if not subset:
-        return len(total_attrs)
-    return int(sqrt(len(total_attrs)))
+def get_feature_subset(total_attrs):
+    attr_list = list(total_attrs)
+    attr_list = [attr for attr in attr_list if attr != 'class']
+    return sample(attr_list,  int(sqrt(len(total_attrs))))
 
 
 def split(dataset, attr, classifier, criteria: cart.iGainType = cart.iGainType.entropy):
@@ -24,6 +23,7 @@ def split(dataset, attr, classifier, criteria: cart.iGainType = cart.iGainType.e
             attr_dict[datum] = 1
         else:
             attr_dict[datum] += 1
+
     for attr_value in attr_dict:
         # proportion
         weight = attr_dict[attr_value] / n
@@ -41,12 +41,6 @@ def split(dataset, attr, classifier, criteria: cart.iGainType = cart.iGainType.e
 
 def split_values(dataset, classifier, attributes, subset_features, criteria: cart.iGainType = cart.iGainType.entropy):
     split_vals = {}
-
-    # handling feature subsets for random forests
-    if subset_features:
-        attr_list = list(attributes)
-        attr_list = [attr for attr in attr_list if attr != 'class']
-        attributes = sample(attr_list, get_feature_set_size(attr_list))
 
     for col in attributes:
         if col == classifier:
@@ -190,6 +184,7 @@ def classify(root: cart.AttrNode, example: dict, dataset: pd.DataFrame, missing_
     while not root.is_leaf:
         ex_value = example[root.attr_name]
         if ex_value == missing_indicator:
-            ex_value = get_replacement_attr_val(dataset, root.attr_name, missing_indicator)
+            ex_value = get_replacement_attr_val(
+                dataset, root.name, missing_indicator)
         root = root.children[ex_value]
     return root.attr_name

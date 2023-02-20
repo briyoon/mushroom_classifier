@@ -5,11 +5,11 @@ import pandas as pd
 import cart
 
 attribute_value_data = pd.read_csv(
-    '../dataset/all-attr-values.csv', sep=',')
+    'dataset/all-attr-values.csv', sep=',')
 training_data = pd.read_csv(
-    '../dataset/agaricus-lepiota - training.csv', sep=',')
+    'dataset/agaricus-lepiota - training.csv', sep=',')
 test_data = pd.read_csv(
-    '../dataset/large_test.csv', sep=',')
+    'dataset/large_test.csv', sep=',')
 training_data, validation_df = train_test_split(training_data, test_size=0.2)
 
 training_data_ids = training_data['id'].values
@@ -23,19 +23,19 @@ gini_root = cart.create_decision_tree(
 entropy_bag = cart.get_bagged_df(test_data)
 # entropy_bag.drop(columns=['id'], inplace=True)
 entropy_root = cart.create_decision_tree(
-    training_data, 'class', entropy_bag.columns, entropy_bag, cart.iGainType.entropy)
+    training_data, 'class', entropy_bag.columns, entropy_bag, cart.iGainType.gini)
 
 misclass_bag = cart.get_bagged_df(test_data)
 # misclass_bag.drop(columns=['id'], inplace=True)
 misclass_root = cart.create_decision_tree(
-    training_data, 'class', misclass_bag.columns, misclass_bag, cart.iGainType.misclass)
+    training_data, 'class', misclass_bag.columns, misclass_bag, cart.iGainType.gini)
 
 validation_dict = validation_df.to_dict('records')
 test_dict = test_data.to_dict('records')
 
 total_correct = 0
 total = len(validation_dict)
-alpha_values = [0.95, 0.99]
+alpha_values = [0.00, 0.05, 0.95, 0.99]
 # key = data record id, value = list of predictions from e/a model
 validation_predictions = {}
 test_predictions = {}
@@ -64,6 +64,7 @@ for prediction in validation_dict:
 accuracy = total_correct / total
 print(f'\ncorrect={total_correct}, total={total}, accuracy={accuracy}')
 
+# Random forest construction
 for alpha in alpha_values:
     chi_root = cart.create_decision_tree(dataset=training_data,
                                          classifier='class',
@@ -89,7 +90,7 @@ for alpha in alpha_values:
 
     chi_acc = chi_total / total
     g_acc = g_total / total
-    print(f'chi tree: alpha={alpha}, chi_acc={chi_acc}, g_acc={g_acc}')
+    print(f'tree: alpha={alpha}, chi_acc={chi_acc}, g_acc={g_acc}')
 
 test_pred_mean = {}
 
